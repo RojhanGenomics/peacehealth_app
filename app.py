@@ -2,7 +2,56 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import jdatetime
-import os
+import gspread
+from google.oauth2.service_account import Credentials
+
+# ============================================================
+# Google Sheets connection (persistent storage)
+# ============================================================
+SHEET_NAME = "PeaceHealth Data"  # must match the Google Sheet you created & shared
+WORKSHEET_NAME = "responses"
+
+SHEET_COLUMNS = [
+    "date_gregorian", "date_local", "language", "age_group", "gender",
+    "country", "city", "stress", "anxiety", "depression", "sleep",
+    "headache", "stomach_pain", "war_event", "displaced", "access_basic",
+    "family_contact", "safety", "support", "hope", "free_text",
+]
+
+
+@st.cache_resource(show_spinner=False)
+def get_worksheet():
+    """Connect once per session and reuse the same worksheet handle."""
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=scopes
+    )
+    client = gspread.authorize(creds)
+    spreadsheet = client.open(SHEET_NAME)
+    try:
+        worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
+    except gspread.exceptions.WorksheetNotFound:
+        worksheet = spreadsheet.add_worksheet(WORKSHEET_NAME, rows=1000, cols=len(SHEET_COLUMNS))
+        worksheet.append_row(SHEET_COLUMNS)
+    if not worksheet.get_all_values():
+        worksheet.append_row(SHEET_COLUMNS)
+    return worksheet
+
+
+def append_response(data: dict):
+    worksheet = get_worksheet()
+    worksheet.append_row([str(data.get(col, "")) for col in SHEET_COLUMNS])
+
+
+def load_responses() -> pd.DataFrame:
+    worksheet = get_worksheet()
+    records = worksheet.get_all_records()
+    if not records:
+        return pd.DataFrame(columns=SHEET_COLUMNS)
+    return pd.DataFrame(records)
 
 # ============================================================
 # Page config
@@ -80,7 +129,7 @@ TEXT = {
         "submit": "📥 ثبت پاسخ‌ها",
         "success": "✅ پاسخ‌های شما با موفقیت ثبت شد. از مشارکت شما سپاسگزاریم! 🙏",
         "summary_expander": "📊 مشاهده خلاصه پاسخ‌ها",
-        "saved_info": "💡 داده‌های شما در فایل `{}` ذخیره شد.",
+        "saved_info": "💡 داده‌های شما در شیت `{}` ذخیره شد.",
         "monitor_header": "📊 دیده‌بان سلامت جامعه (نمونه)",
         "show_data_btn": "نمایش داده‌های ثبت شده",
         "no_data_warning": "هنوز داده‌ای ثبت نشده است. اولین داده را ثبت کنید!",
@@ -137,7 +186,7 @@ TEXT = {
         "submit": "📥 Submit Responses",
         "success": "✅ Your responses have been successfully recorded. Thank you for your participation! 🙏",
         "summary_expander": "📊 View Summary",
-        "saved_info": "💡 Your data has been saved in `{}`.",
+        "saved_info": "💡 Your data has been saved in the `{}` sheet.",
         "monitor_header": "📊 Community Health Monitor (Sample)",
         "show_data_btn": "Show Recorded Data",
         "no_data_warning": "No data recorded yet. Please submit your first response!",
@@ -194,7 +243,7 @@ TEXT = {
         "submit": "📥 إرسال الإجابات",
         "success": "✅ تم تسجيل إجاباتك بنجاح. شكراً لمشاركتك! 🙏",
         "summary_expander": "📊 عرض الملخص",
-        "saved_info": "💡 تم حفظ بياناتك في الملف `{}`.",
+        "saved_info": "💡 تم حفظ بياناتك في الجدول `{}`.",
         "monitor_header": "📊 مراقب صحة المجتمع (عينة)",
         "show_data_btn": "عرض البيانات المسجلة",
         "no_data_warning": "لا توجد بيانات مسجلة بعد. يرجى إرسال أول إجابة!",
@@ -336,16 +385,11 @@ if submitted:
     with st.expander(t["summary_expander"]):
         st.json(data)
 
-    csv_file = "peacehealth_data.csv"
     try:
-        df_existing = pd.read_csv(csv_file)
-        df_new = pd.DataFrame([data])
-        df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-        df_combined.to_csv(csv_file, index=False)
-    except FileNotFoundError:
-        pd.DataFrame([data]).to_csv(csv_file, index=False)
-
-    st.info(t["saved_info"].format(csv_file))
+        append_response(data)
+        st.info(t["saved_info"].format(SHEET_NAME))
+    except Exception as e:
+        st.error(f"⚠️ {e}")
 
 # ============================================================
 # Community monitor (sample view of recent submissions)
@@ -354,10 +398,12 @@ st.markdown("---")
 st.subheader(t["monitor_header"])
 
 if st.button(t["show_data_btn"]):
-    csv_file = "peacehealth_data.csv"
-    if os.path.exists(csv_file):
-        df = pd.read_csv(csv_file)
+    df = load_responses()
+    if not df.empty:
         st.dataframe(df.tail(10))
+        for col in ["stress", "anxiety", "depression"]:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
         st.line_chart(df[["stress", "anxiety", "depression"]].tail(20))
     else:
         st.warning(t["no_data_warning"])
