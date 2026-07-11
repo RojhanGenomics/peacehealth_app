@@ -3,3 +3,5 @@ pandas
 jdatetime
 textblob
 nltk
+gspread
+google-auth
