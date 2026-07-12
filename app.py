@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import jdatetime
 import gspread
+import streamlit.components.v1 as components
 from google.oauth2.service_account import Credentials
 
 # ============================================================
@@ -59,6 +60,45 @@ def load_responses() -> pd.DataFrame:
 st.set_page_config(page_title="PeaceHealth Insights", page_icon="🧠", layout="centered")
 
 # ============================================================
+# PWA support: inject manifest, theme-color, and service worker
+# registration into the parent document (Streamlit renders this
+# component in a same-origin iframe, so window.parent.document
+# is reachable). This lets mobile browsers offer "Add to Home
+# Screen" / "Install App" for a standalone, app-like experience.
+# ============================================================
+components.html(
+    """
+    <script>
+    (function () {
+        const doc = window.parent.document;
+        if (!doc.querySelector('link[rel="manifest"]')) {
+            const manifestLink = doc.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = 'app/static/manifest.json';
+            doc.head.appendChild(manifestLink);
+        }
+        if (!doc.querySelector('meta[name="theme-color"]')) {
+            const themeMeta = doc.createElement('meta');
+            themeMeta.name = 'theme-color';
+            themeMeta.content = '#1F4E5F';
+            doc.head.appendChild(themeMeta);
+        }
+        if (!doc.querySelector('link[rel="apple-touch-icon"]')) {
+            const appleIcon = doc.createElement('link');
+            appleIcon.rel = 'apple-touch-icon';
+            appleIcon.href = 'app/static/icon-192.png';
+            doc.head.appendChild(appleIcon);
+        }
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('app/static/sw.js').catch(function () {});
+        }
+    })();
+    </script>
+    """,
+    height=0,
+)
+
+# ============================================================
 # Digit conversion helpers (for Persian / Arabic numerals)
 # ============================================================
 PERSIAN_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
@@ -80,7 +120,7 @@ TEXT = {
     "fa": {
         "title": "🧠 PeaceHealth Insights",
         "subtitle": "ثبت وضعیت سلامت امروز شما",
-        "privacy_notice": "🔒 تمام داده‌ها به صورت ناشناس ذخیره می‌شوند و فقط برای اهداف تحقیقاتی استفاده می‌شوند.",
+        "privacy_notice": "🔒 پاسخ‌های شما بدون نام یا اطلاعات هویتی، در یک پایگاه داده‌ی امن ذخیره و فقط برای اهداف تحقیقاتی تحلیل می‌شوند.",
         "date_gregorian": "📅 **تاریخ امروز (میلادی):** {}",
         "date_local": "📅 **تاریخ امروز (شمسی):** {}",
         "language_label": "زبان / Language",
@@ -133,11 +173,23 @@ TEXT = {
         "monitor_header": "📊 دیده‌بان سلامت جامعه (نمونه)",
         "show_data_btn": "نمایش داده‌های ثبت شده",
         "no_data_warning": "هنوز داده‌ای ثبت نشده است. اولین داده را ثبت کنید!",
+        "consent_title": "🔒 رضایت آگاهانه برای شرکت در این پرسشنامه",
+        "consent_intro": "لطفاً پیش از ادامه، موارد زیر را با دقت بخوانید:",
+        "consent_points": [
+            "شرکت در این پرسشنامه کاملاً داوطلبانه است و می‌توانید در هر لحظه بدون هیچ عواقبی آن را متوقف کنید.",
+            "هیچ نام، شماره تماس، یا اطلاعات هویتی از شما پرسیده نمی‌شود.",
+            "داده‌های شما به‌صورت ناشناس در یک پایگاه داده‌ی امن (Google Sheets، با دسترسی محدود) ذخیره می‌شود.",
+            "داده‌ها فقط برای اهداف تحقیقاتی و ارائه‌ی تصویری کلی از وضعیت سلامت جامعه استفاده می‌شوند و هرگز فروخته یا برای تبلیغات استفاده نمی‌شوند.",
+            "می‌توانید از پاسخ به هر سؤال خاصی که تمایل ندارید صرف‌نظر کنید.",
+        ],
+        "consent_checkbox": "متوجه شدم و با شرکت در این پرسشنامه موافقم.",
+        "consent_button": "ورود به پرسشنامه",
+        "consent_required_warning": "برای ادامه، لطفاً ابتدا تیک رضایت را بزنید.",
     },
     "en": {
         "title": "🧠 PeaceHealth Insights",
         "subtitle": "Record your health status for today",
-        "privacy_notice": "🔒 All data is stored anonymously and used only for research purposes.",
+        "privacy_notice": "🔒 Your responses are stored anonymously (no name or identifying details) in a secured database and used only for research purposes.",
         "date_gregorian": "📅 **Today's date (Gregorian):** {}",
         "date_local": "📅 **Today's date (local calendar):** {}",
         "language_label": "زبان / Language",
@@ -190,11 +242,23 @@ TEXT = {
         "monitor_header": "📊 Community Health Monitor (Sample)",
         "show_data_btn": "Show Recorded Data",
         "no_data_warning": "No data recorded yet. Please submit your first response!",
+        "consent_title": "🔒 Informed Consent to Participate",
+        "consent_intro": "Please read the following carefully before continuing:",
+        "consent_points": [
+            "Participation in this questionnaire is entirely voluntary, and you may stop at any time without any consequence.",
+            "No name, contact details, or identifying information is requested from you.",
+            "Your data is stored anonymously in a secured database (Google Sheets, with restricted access).",
+            "Data is used only for research purposes and to provide an aggregate picture of community well-being. It is never sold or used for advertising.",
+            "You may skip any individual question you do not wish to answer.",
+        ],
+        "consent_checkbox": "I understand and agree to participate.",
+        "consent_button": "Enter Questionnaire",
+        "consent_required_warning": "Please check the consent box before continuing.",
     },
     "ar": {
         "title": "🧠 رؤى السلام الصحية",
         "subtitle": "سجّل حالتك الصحية اليوم",
-        "privacy_notice": "🔒 يتم تخزين جميع البيانات بشكل مجهول وتُستخدم فقط لأغراض بحثية.",
+        "privacy_notice": "🔒 يتم تخزين إجاباتك بشكل مجهول (دون اسم أو معلومات تعريفية) في قاعدة بيانات آمنة وتُستخدم فقط لأغراض بحثية.",
         "date_gregorian": "📅 **التاريخ الميلادي اليوم:** {}",
         "date_local": "📅 **التاريخ اليوم (التقويم المحلي):** {}",
         "language_label": "زبان / Language",
@@ -247,6 +311,18 @@ TEXT = {
         "monitor_header": "📊 مراقب صحة المجتمع (عينة)",
         "show_data_btn": "عرض البيانات المسجلة",
         "no_data_warning": "لا توجد بيانات مسجلة بعد. يرجى إرسال أول إجابة!",
+        "consent_title": "🔒 الموافقة المستنيرة على المشاركة",
+        "consent_intro": "يرجى قراءة ما يلي بعناية قبل المتابعة:",
+        "consent_points": [
+            "المشاركة في هذا الاستبيان طوعية تماماً، ويمكنك التوقف في أي وقت دون أي عواقب.",
+            "لا يُطلب منك أي اسم أو معلومات اتصال أو معلومات تعريفية.",
+            "يتم تخزين بياناتك بشكل مجهول في قاعدة بيانات آمنة (Google Sheets، بوصول محدود).",
+            "تُستخدم البيانات فقط لأغراض بحثية ولتقديم صورة عامة عن صحة المجتمع. لا تُباع أبداً ولا تُستخدم للإعلانات.",
+            "يمكنك تخطي أي سؤال معين لا ترغب في الإجابة عليه.",
+        ],
+        "consent_checkbox": "لقد فهمت وأوافق على المشاركة.",
+        "consent_button": "الدخول إلى الاستبيان",
+        "consent_required_warning": "يرجى تحديد مربع الموافقة قبل المتابعة.",
     },
 }
 
@@ -280,6 +356,31 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# ============================================================
+# Informed consent gate — the questionnaire is hidden until the
+# respondent actively checks the consent box and clicks through.
+# ============================================================
+if "consent_given" not in st.session_state:
+    st.session_state.consent_given = False
+
+if not st.session_state.consent_given:
+    st.title(t["title"])
+    st.markdown("---")
+    st.subheader(t["consent_title"])
+    st.write(t["consent_intro"])
+    for point in t["consent_points"]:
+        st.markdown(f"- {point}")
+    st.markdown("---")
+
+    agree = st.checkbox(t["consent_checkbox"])
+    if st.button(t["consent_button"]):
+        if agree:
+            st.session_state.consent_given = True
+            st.rerun()
+        else:
+            st.warning(t["consent_required_warning"])
+    st.stop()
 
 # ============================================================
 # Header
