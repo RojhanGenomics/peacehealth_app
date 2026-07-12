@@ -14,9 +14,11 @@ WORKSHEET_NAME = "responses"
 
 SHEET_COLUMNS = [
     "date_gregorian", "date_local", "language", "age_group", "gender",
-    "country", "city", "stress", "anxiety", "depression", "sleep",
-    "headache", "stomach_pain", "war_event", "displaced", "access_basic",
-    "family_contact", "safety", "support", "hope", "free_text",
+    "country", "city",
+    "phq4_interest", "phq4_down", "phq4_nervous", "phq4_worry",
+    "phq4_anxiety_score", "phq4_depression_score", "phq4_total_score",
+    "sleep", "headache", "stomach_pain", "war_event", "displaced", "access_basic",
+    "family_contact", "safety", "support", "hope", "coping", "free_text",
 ]
 
 
@@ -133,11 +135,13 @@ TEXT = {
         "country_placeholder": "مثال: ایران",
         "city": "شهر / استان",
         "city_placeholder": "مثال: تهران، کرمانشاه، ...",
-        "section1": "### ۱. سطح استرس و اضطراب",
-        "stress": "امروز چقدر استرس داشته‌اید؟",
-        "stress_help": "۱ = خیلی کم، ۱۰ = خیلی زیاد",
-        "anxiety": "امروز چقدر احساس اضطراب کرده‌اید؟",
-        "depression": "امروز چقدر احساس افسردگی یا ناامیدی کرده‌اید؟",
+        "section1": "### ۱. غربالگری سلامت روان (بر پایه‌ی ابزار معتبر PHQ-4)",
+        "phq4_intro": "در طول امروز، چقدر با موارد زیر مواجه بوده‌اید؟",
+        "phq4_scale": ["اصلاً", "کمی", "نسبتاً زیاد", "خیلی زیاد"],
+        "phq4_interest": "بی‌علاقگی یا نبود لذت در انجام کارها",
+        "phq4_down": "احساس ناامیدی، دلسردی یا افسردگی",
+        "phq4_nervous": "احساس عصبی بودن، اضطراب یا دستپاچگی",
+        "phq4_worry": "ناتوانی در متوقف کردن یا کنترل نگرانی",
         "sleep": "کیفیت خواب شما امروز چطور بود؟",
         "sleep_help": "۱ = خیلی بد، ۱۰ = خیلی خوب",
         "section2": "### ۲. علائم جسمی",
@@ -163,6 +167,15 @@ TEXT = {
         "safety": "امروز چقدر احساس امنیت می‌کنید؟",
         "support": "امروز چقدر از حمایت اجتماعی برخوردار بوده‌اید؟",
         "hope": "امروز چقدر نسبت به آینده امیدوار هستید؟",
+        "coping": "امروز برای بهتر شدن حالتان یا مقابله با شرایط، از کدام‌یک از این روش‌ها استفاده کردید؟",
+        "coping_options": [
+            "صحبت با خانواده یا دوستان",
+            "دعا یا نیایش / رفتار معنوی",
+            "فعالیت بدنی یا ورزش",
+            "تلاش برای استراحت یا حواس‌پرتی از مشکل",
+            "کمک گرفتن از حمایت حرفه‌ای یا اجتماع محلی",
+            "هیچ‌کدام",
+        ],
         "section5": "### ۵. جمله آزاد",
         "free_text_label": "اگر بخواهید یک جمله درباره وضعیت امروزتان بنویسید، چه می‌گویید؟",
         "free_text_placeholder": "نظر خود را بنویسید...",
@@ -202,11 +215,13 @@ TEXT = {
         "country_placeholder": "e.g. Iran",
         "city": "City / Province",
         "city_placeholder": "e.g. Tehran, Kermanshah, ...",
-        "section1": "### 1. Stress & Anxiety Level",
-        "stress": "How much stress did you feel today?",
-        "stress_help": "1 = Very low, 10 = Very high",
-        "anxiety": "How much anxiety did you feel today?",
-        "depression": "How much depression or hopelessness did you feel today?",
+        "section1": "### 1. Well-Being Screening (based on the validated PHQ-4 tool)",
+        "phq4_intro": "Over the course of today, how much have you been bothered by the following?",
+        "phq4_scale": ["Not at all", "A little", "Quite a bit", "A lot"],
+        "phq4_interest": "Little interest or pleasure in doing things",
+        "phq4_down": "Feeling down, depressed, or hopeless",
+        "phq4_nervous": "Feeling nervous, anxious, or on edge",
+        "phq4_worry": "Not being able to stop or control worrying",
         "sleep": "How was your sleep quality today?",
         "sleep_help": "1 = Very bad, 10 = Very good",
         "section2": "### 2. Physical Symptoms",
@@ -232,6 +247,15 @@ TEXT = {
         "safety": "How safe do you feel today?",
         "support": "How much social support did you receive today?",
         "hope": "How hopeful do you feel about the future today?",
+        "coping": "Which of the following did you use today to feel better or cope with the situation?",
+        "coping_options": [
+            "Talked with family or friends",
+            "Prayer / spiritual practice",
+            "Physical activity or exercise",
+            "Tried to rest or distract myself",
+            "Sought professional or community support",
+            "None of these",
+        ],
         "section5": "### 5. Open Comment",
         "free_text_label": "Write a sentence about your situation today:",
         "free_text_placeholder": "Write your thoughts here...",
@@ -271,11 +295,13 @@ TEXT = {
         "country_placeholder": "مثال: العراق",
         "city": "المدينة / المحافظة",
         "city_placeholder": "مثال: بغداد، دمشق، ...",
-        "section1": "### ١. مستوى التوتر والقلق",
-        "stress": "كم كان مستوى التوتر لديك اليوم؟",
-        "stress_help": "١ = منخفض جداً، ١٠ = مرتفع جداً",
-        "anxiety": "كم شعرت بالقلق اليوم؟",
-        "depression": "كم شعرت بالاكتئاب أو اليأس اليوم؟",
+        "section1": "### ١. فحص الصحة النفسية (بناءً على أداة PHQ-4 المعتمدة)",
+        "phq4_intro": "خلال اليوم، إلى أي مدى شعرت بالانزعاج مما يلي؟",
+        "phq4_scale": ["أبداً", "قليلاً", "بشكل ملحوظ", "كثيراً"],
+        "phq4_interest": "قلة الاهتمام أو المتعة في القيام بالأشياء",
+        "phq4_down": "الشعور بالإحباط أو الاكتئاب أو اليأس",
+        "phq4_nervous": "الشعور بالعصبية أو القلق أو التوتر",
+        "phq4_worry": "عدم القدرة على إيقاف أو التحكم في القلق",
         "sleep": "كيف كانت جودة نومك اليوم؟",
         "sleep_help": "١ = سيئة جداً، ١٠ = جيدة جداً",
         "section2": "### ٢. الأعراض الجسدية",
@@ -301,6 +327,15 @@ TEXT = {
         "safety": "ما مدى شعورك بالأمان اليوم؟",
         "support": "ما مقدار الدعم الاجتماعي الذي تلقيته اليوم؟",
         "hope": "ما مدى شعورك بالأمل تجاه المستقبل اليوم؟",
+        "coping": "أي مما يلي استخدمته اليوم لتشعر بتحسن أو للتعامل مع الوضع؟",
+        "coping_options": [
+            "التحدث مع العائلة أو الأصدقاء",
+            "الصلاة / ممارسة روحية",
+            "النشاط البدني أو الرياضة",
+            "محاولة الراحة أو تشتيت الانتباه",
+            "طلب الدعم المهني أو المجتمعي",
+            "لا شيء من ذلك",
+        ],
         "section5": "### ٥. تعليق مفتوح",
         "free_text_label": "اكتب جملة عن وضعك اليوم:",
         "free_text_placeholder": "اكتب أفكارك هنا...",
@@ -420,9 +455,11 @@ with st.form("health_form"):
 
     st.markdown("---")
     st.markdown(t["section1"])
-    stress = st.slider(t["stress"], 1, 10, 5, help=t["stress_help"])
-    anxiety = st.slider(t["anxiety"], 1, 10, 5)
-    depression = st.slider(t["depression"], 1, 10, 5)
+    st.caption(t["phq4_intro"])
+    phq4_interest = st.radio(t["phq4_interest"], t["phq4_scale"], horizontal=True)
+    phq4_down = st.radio(t["phq4_down"], t["phq4_scale"], horizontal=True)
+    phq4_nervous = st.radio(t["phq4_nervous"], t["phq4_scale"], horizontal=True)
+    phq4_worry = st.radio(t["phq4_worry"], t["phq4_scale"], horizontal=True)
     sleep = st.slider(t["sleep"], 1, 10, 5, help=t["sleep_help"])
 
     st.markdown("---")
@@ -445,6 +482,7 @@ with st.form("health_form"):
     safety = st.slider(t["safety"], 1, 10, 5)
     support = st.slider(t["support"], 1, 10, 5)
     hope = st.slider(t["hope"], 1, 10, 5)
+    coping = st.multiselect(t["coping"], t["coping_options"])
 
     st.markdown("---")
     st.markdown(t["section5"])
@@ -456,6 +494,12 @@ with st.form("health_form"):
 # Handle submission
 # ============================================================
 if submitted:
+    scale = t["phq4_scale"]
+    interest_score = scale.index(phq4_interest)
+    down_score = scale.index(phq4_down)
+    nervous_score = scale.index(phq4_nervous)
+    worry_score = scale.index(phq4_worry)
+
     data = {
         "date_gregorian": today_gregorian,
         "date_local": today_jalali_raw,
@@ -464,9 +508,13 @@ if submitted:
         "gender": gender,
         "country": country,
         "city": city,
-        "stress": stress,
-        "anxiety": anxiety,
-        "depression": depression,
+        "phq4_interest": phq4_interest,
+        "phq4_down": phq4_down,
+        "phq4_nervous": phq4_nervous,
+        "phq4_worry": phq4_worry,
+        "phq4_anxiety_score": nervous_score + worry_score,
+        "phq4_depression_score": interest_score + down_score,
+        "phq4_total_score": interest_score + down_score + nervous_score + worry_score,
         "sleep": sleep,
         "headache": headache,
         "stomach_pain": stomach_pain,
@@ -477,6 +525,7 @@ if submitted:
         "safety": safety,
         "support": support,
         "hope": hope,
+        "coping": ", ".join(coping),
         "free_text": free_text,
     }
 
@@ -502,9 +551,12 @@ if st.button(t["show_data_btn"]):
     df = load_responses()
     if not df.empty:
         st.dataframe(df.tail(10))
-        for col in ["stress", "anxiety", "depression"]:
+        chart_cols = ["phq4_anxiety_score", "phq4_depression_score", "sleep"]
+        for col in chart_cols:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors="coerce")
-        st.line_chart(df[["stress", "anxiety", "depression"]].tail(20))
+        available_cols = [c for c in chart_cols if c in df.columns]
+        if available_cols:
+            st.line_chart(df[available_cols].tail(20))
     else:
         st.warning(t["no_data_warning"])
