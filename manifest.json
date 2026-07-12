@@ -1,0 +1,23 @@
+{
+  "name": "PeaceHealth Insights",
+  "short_name": "PeaceHealth",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#EAF2F5",
+  "theme_color": "#1F4E5F",
+  "description": "Anonymous well-being reporting for communities affected by conflict.",
+  "icons": [
+    {
+      "src": "app/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "app/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
