@@ -13,7 +13,7 @@ SHEET_NAME = "PeaceHealth Data"  # must match the Google Sheet you created & sha
 WORKSHEET_NAME = "responses"
 
 SHEET_COLUMNS = [
-    "date_gregorian", "date_local", "language", "age_group", "gender",
+    "date_gregorian", "date_local", "language", "anonymous_id", "age_group", "gender",
     "country", "city",
     "phq4_interest", "phq4_down", "phq4_nervous", "phq4_worry",
     "phq4_anxiety_score", "phq4_depression_score", "phq4_total_score",
@@ -198,6 +198,10 @@ TEXT = {
         "consent_checkbox": "متوجه شدم و با شرکت در این پرسشنامه موافقم.",
         "consent_button": "ورود به پرسشنامه",
         "consent_required_warning": "برای ادامه، لطفاً ابتدا تیک رضایت را بزنید.",
+        "already_submitted_title": "✅ شرکت شما امروز ثبت شده است",
+        "already_submitted_body": "به نظر می‌رسد شما امروز قبلاً در این پرسشنامه شرکت کرده‌اید. برای اینکه داده‌های آماری دقیق بمانند، هر فرد فقط می‌تواند یک‌بار در روز پاسخ ثبت کند. لطفاً فردا دوباره مراجعه کنید. از مشارکت شما سپاسگزاریم! 🙏",
+        "anonymous_id_label": "یک کد شخصی ناشناس بسازید (اختیاری، ولی توصیه می‌شود)",
+        "anonymous_id_help": "برای حفظ حریم خصوصی، از اسم واقعی استفاده نکنید. مثال: حرف اول نام مادربزرگتان + دو رقم آخر سال تولدتان (مثلاً «ز۷۲»). این کد کمک می‌کند روند پاسخ‌های شما در طول زمان بدون افشای هویت‌تان دنبال شود.",
     },
     "en": {
         "title": "🧠 PeaceHealth Insights",
@@ -278,6 +282,10 @@ TEXT = {
         "consent_checkbox": "I understand and agree to participate.",
         "consent_button": "Enter Questionnaire",
         "consent_required_warning": "Please check the consent box before continuing.",
+        "already_submitted_title": "✅ Your response for today is already recorded",
+        "already_submitted_body": "It looks like you've already completed this questionnaire today. To keep the statistics accurate, each person can submit only once per day. Please come back tomorrow. Thank you for participating! 🙏",
+        "anonymous_id_label": "Create a personal anonymous code (optional, but recommended)",
+        "anonymous_id_help": "For your privacy, don't use your real name. Example: your grandmother's first initial + the last two digits of your birth year (e.g. \"M72\"). This helps us track your responses over time without revealing your identity.",
     },
     "ar": {
         "title": "🧠 رؤى السلام الصحية",
@@ -358,6 +366,10 @@ TEXT = {
         "consent_checkbox": "لقد فهمت وأوافق على المشاركة.",
         "consent_button": "الدخول إلى الاستبيان",
         "consent_required_warning": "يرجى تحديد مربع الموافقة قبل المتابعة.",
+        "already_submitted_title": "✅ تم تسجيل مشاركتك لهذا اليوم بالفعل",
+        "already_submitted_body": "يبدو أنك أكملت هذا الاستبيان بالفعل اليوم. للحفاظ على دقة الإحصائيات، يمكن لكل شخص إرسال إجابة واحدة فقط في اليوم. يرجى العودة غداً. شكراً لمشاركتك! 🙏",
+        "anonymous_id_label": "أنشئ رمزاً شخصياً مجهولاً (اختياري، لكن يُنصح به)",
+        "anonymous_id_help": "لحماية خصوصيتك، لا تستخدم اسمك الحقيقي. مثال: الحرف الأول من اسم جدتك + آخر رقمين من سنة ميلادك (مثال: \"م72\"). يساعدنا هذا على تتبع إجاباتك عبر الزمن دون الكشف عن هويتك.",
     },
 }
 
@@ -392,6 +404,44 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+today_gregorian = datetime.now().strftime("%Y-%m-%d")
+
+# ============================================================
+# Daily submission lock (best-effort, privacy-preserving)
+# We never collect names/phone numbers, so we can't truly
+# identify a person. Instead we use the respondent's own browser
+# storage: once they submit, their browser remembers today's date
+# and the app blocks a second submission from that same browser
+# on the same day. This isn't bulletproof (clearing browser data
+# or using a different device/incognito window bypasses it), but
+# it stops the common case of accidental or casual repeat entries.
+# ============================================================
+if st.query_params.get("already_submitted") == "1":
+    st.title(t["title"])
+    st.markdown("---")
+    st.success(t["already_submitted_title"])
+    st.write(t["already_submitted_body"])
+    st.stop()
+
+components.html(
+    f"""
+    <script>
+    (function () {{
+        try {{
+            const today = "{today_gregorian}";
+            const last = window.parent.localStorage.getItem('peacehealth_submitted_date');
+            const url = new URL(window.parent.location.href);
+            if (last === today && url.searchParams.get('already_submitted') !== '1') {{
+                url.searchParams.set('already_submitted', '1');
+                window.parent.location.href = url.toString();
+            }}
+        }} catch (e) {{}}
+    }})();
+    </script>
+    """,
+    height=0,
+)
+
 # ============================================================
 # Informed consent gate — the questionnaire is hidden until the
 # respondent actively checks the consent box and clicks through.
@@ -424,7 +474,6 @@ st.title(t["title"])
 st.subheader(t["subtitle"])
 st.markdown("---")
 
-today_gregorian = datetime.now().strftime("%Y-%m-%d")
 today_jalali_raw = jdatetime.datetime.now().strftime("%Y/%m/%d")
 if lang == "fa":
     today_local = to_persian_digits(today_jalali_raw)
@@ -444,6 +493,8 @@ st.markdown("---")
 # ============================================================
 with st.form("health_form"):
     st.markdown(t["form_header"])
+
+    anonymous_id = st.text_input(t["anonymous_id_label"], help=t["anonymous_id_help"])
 
     col1, col2 = st.columns(2)
     with col1:
@@ -504,6 +555,7 @@ if submitted:
         "date_gregorian": today_gregorian,
         "date_local": today_jalali_raw,
         "language": lang,
+        "anonymous_id": anonymous_id,
         "age_group": age_group,
         "gender": gender,
         "country": country,
@@ -538,6 +590,16 @@ if submitted:
     try:
         append_response(data)
         st.info(t["saved_info"].format(SHEET_NAME))
+        components.html(
+            f"""
+            <script>
+            try {{
+                window.parent.localStorage.setItem('peacehealth_submitted_date', "{today_gregorian}");
+            }} catch (e) {{}}
+            </script>
+            """,
+            height=0,
+        )
     except Exception as e:
         st.error(f"⚠️ {e}")
 
