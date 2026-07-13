@@ -200,8 +200,12 @@ TEXT = {
         "consent_required_warning": "برای ادامه، لطفاً ابتدا تیک رضایت را بزنید.",
         "already_submitted_title": "✅ شرکت شما امروز ثبت شده است",
         "already_submitted_body": "به نظر می‌رسد شما امروز قبلاً در این پرسشنامه شرکت کرده‌اید. برای اینکه داده‌های آماری دقیق بمانند، هر فرد فقط می‌تواند یک‌بار در روز پاسخ ثبت کند. لطفاً فردا دوباره مراجعه کنید. از مشارکت شما سپاسگزاریم! 🙏",
-        "anonymous_id_label": "یک کد شخصی ناشناس بسازید (اختیاری، ولی توصیه می‌شود)",
-        "anonymous_id_help": "برای حفظ حریم خصوصی، از اسم واقعی استفاده نکنید. مثال: حرف اول نام مادربزرگتان + دو رقم آخر سال تولدتان (مثلاً «ز۷۲»). این کد کمک می‌کند روند پاسخ‌های شما در طول زمان بدون افشای هویت‌تان دنبال شود.",
+        "id_intro": "برای جلوگیری از ثبت چندباره‌ی پاسخ‌ها و امکان بررسی روند سلامت شما در طول زمان، این دو سؤال کوتاه را پاسخ دهید (اطلاعات هویتی محسوب نمی‌شوند و ذخیره نمی‌شوند):",
+        "id_part1_label": "حرف اول نام کوچک مادرتان",
+        "id_part1_placeholder": "مثال: ز",
+        "id_part2_label": "دو رقم آخر سال تولدتان (میلادی یا شمسی)",
+        "id_part2_placeholder": "مثال: ۷۲",
+        "id_required_warning": "لطفاً هر دو سؤال بالا را برای ادامه پاسخ دهید.",
     },
     "en": {
         "title": "🧠 PeaceHealth Insights",
@@ -284,8 +288,12 @@ TEXT = {
         "consent_required_warning": "Please check the consent box before continuing.",
         "already_submitted_title": "✅ Your response for today is already recorded",
         "already_submitted_body": "It looks like you've already completed this questionnaire today. To keep the statistics accurate, each person can submit only once per day. Please come back tomorrow. Thank you for participating! 🙏",
-        "anonymous_id_label": "Create a personal anonymous code (optional, but recommended)",
-        "anonymous_id_help": "For your privacy, don't use your real name. Example: your grandmother's first initial + the last two digits of your birth year (e.g. \"M72\"). This helps us track your responses over time without revealing your identity.",
+        "id_intro": "To prevent duplicate submissions and allow us to track your well-being over time, please answer these two short questions (not identifying information, and not stored as-is):",
+        "id_part1_label": "First letter of your mother's first name",
+        "id_part1_placeholder": "e.g. M",
+        "id_part2_label": "Last two digits of your birth year",
+        "id_part2_placeholder": "e.g. 92",
+        "id_required_warning": "Please answer both questions above to continue.",
     },
     "ar": {
         "title": "🧠 رؤى السلام الصحية",
@@ -368,8 +376,12 @@ TEXT = {
         "consent_required_warning": "يرجى تحديد مربع الموافقة قبل المتابعة.",
         "already_submitted_title": "✅ تم تسجيل مشاركتك لهذا اليوم بالفعل",
         "already_submitted_body": "يبدو أنك أكملت هذا الاستبيان بالفعل اليوم. للحفاظ على دقة الإحصائيات، يمكن لكل شخص إرسال إجابة واحدة فقط في اليوم. يرجى العودة غداً. شكراً لمشاركتك! 🙏",
-        "anonymous_id_label": "أنشئ رمزاً شخصياً مجهولاً (اختياري، لكن يُنصح به)",
-        "anonymous_id_help": "لحماية خصوصيتك، لا تستخدم اسمك الحقيقي. مثال: الحرف الأول من اسم جدتك + آخر رقمين من سنة ميلادك (مثال: \"م72\"). يساعدنا هذا على تتبع إجاباتك عبر الزمن دون الكشف عن هويتك.",
+        "id_intro": "لمنع تكرار الإرسال ولمساعدتنا في متابعة صحتك عبر الزمن، يرجى الإجابة عن هذين السؤالين القصيرين (ليست معلومات تعريفية ولا تُحفظ كما هي):",
+        "id_part1_label": "الحرف الأول من اسم والدتك",
+        "id_part1_placeholder": "مثال: م",
+        "id_part2_label": "آخر رقمين من سنة ميلادك",
+        "id_part2_placeholder": "مثال: 92",
+        "id_required_warning": "يرجى الإجابة عن كلا السؤالين أعلاه للمتابعة.",
     },
 }
 
@@ -494,7 +506,12 @@ st.markdown("---")
 with st.form("health_form"):
     st.markdown(t["form_header"])
 
-    anonymous_id = st.text_input(t["anonymous_id_label"], help=t["anonymous_id_help"])
+    st.caption(t["id_intro"])
+    id_col1, id_col2 = st.columns(2)
+    with id_col1:
+        id_part1 = st.text_input(t["id_part1_label"], placeholder=t["id_part1_placeholder"], max_chars=1)
+    with id_col2:
+        id_part2 = st.text_input(t["id_part2_label"], placeholder=t["id_part2_placeholder"], max_chars=2)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -545,6 +562,12 @@ with st.form("health_form"):
 # Handle submission
 # ============================================================
 if submitted:
+    if not id_part1.strip() or not id_part2.strip():
+        st.warning(t["id_required_warning"])
+        st.stop()
+
+    anonymous_id = f"{id_part1.strip().upper()[:1]}{id_part2.strip()[:2]}"
+
     scale = t["phq4_scale"]
     interest_score = scale.index(phq4_interest)
     down_score = scale.index(phq4_down)
